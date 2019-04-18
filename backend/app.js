@@ -36,8 +36,10 @@ app.use((req, res, next) => {
 });
 
 const userRoutes = require('./routes/user');
+const postsRoutes = require('./routes/posts');
 
 // Routes
 app.use('/api/user', userRoutes);
+app.use('/api/posts', postsRoutes);
 
 module.exports = app;
