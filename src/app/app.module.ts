@@ -8,11 +8,13 @@ import { AngularMaterialModule } from './angular-material.module';
 import { HttpClientModule } from '@angular/common/http';
 import { HeaderComponent } from './features/header/header.component';
 import { PostsModule } from './features/posts/posts.module';
+import { ErrorComponent } from './features/error/error.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    HeaderComponent
+    HeaderComponent,
+    ErrorComponent
   ],
   imports: [
     BrowserModule,
