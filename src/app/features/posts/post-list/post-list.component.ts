@@ -1,15 +1,74 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Post } from '../post.model';
+import { Subscription } from 'rxjs';
+import { PostsService } from '../posts.service';
+import { AuthService } from '../../auth/auth.service';
+import { PageEvent } from '@angular/material';
 
 @Component({
   selector: 'app-post-list',
   templateUrl: './post-list.component.html',
   styleUrls: ['./post-list.component.scss']
 })
-export class PostListComponent implements OnInit {
+export class PostListComponent implements OnInit, OnDestroy {
 
-  constructor() { }
+  posts: Post[] = [];
+  isLoading = false;
+  totalPosts = 0;
+  postsPerPage = 2;
+  currentPage = 1;
+  pageSizeOptions = [1, 2, 5, 10];
+  private postsSub: Subscription;
+  private authStatusSubs: Subscription;
+  userIsAuthenticated = false;
+  userId: string;
+
+  constructor(
+    private postsService: PostsService,
+    private authService: AuthService
+  ) { }
 
   ngOnInit() {
+    this.isLoading = true;
+    this.postsService.getPosts(this.postsPerPage, this.currentPage);
+    this.userId = this.authService.getUserId();
+    this.postsSub = this.postsService.getPostUpdateListener()
+      .subscribe(
+        (postData: { posts: Post[], postCount: number }) => {
+          this.isLoading = false;
+          this.totalPosts = postData.postCount;
+          this.posts = postData.posts;
+        }
+      );
+    this.userIsAuthenticated = this.authService.getIsAuth();
+    this.authStatusSubs = this.authService
+      .getAuthStatusListener()
+      .subscribe(isAuthenticated => {
+        this.userIsAuthenticated = isAuthenticated;
+        this.userId = this.authService.getUserId();
+      });
+  }
+
+  onChangedPage(pageData: PageEvent) {
+    this.isLoading = true;
+    this.currentPage = pageData.pageIndex + 1;
+    this.postsPerPage = pageData.pageSize;
+    this.postsService.getPosts(this.postsPerPage, this.currentPage);
+  }
+
+  onDelete(postId: string) {
+    this.isLoading = true;
+    this.postsService.deletePost(postId)
+      .subscribe(() => {
+        this.postsService.getPosts(this.postsPerPage, this.currentPage);
+      }, () => {
+        this.isLoading = false;
+      });
+  }
+
+  ngOnDestroy() {
+    this.postsSub.unsubscribe();
+    this.authStatusSubs.unsubscribe();
   }
 
 }
